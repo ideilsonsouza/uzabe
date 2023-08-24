@@ -63,7 +63,7 @@
         ],
         [
             "uzabe/request.py",
-            "github:ideilsonsouza/uzabe/lib/uzabe/request.py"
+            "github:ideilsonsouza/uzabe/lib/uzabe/requests.py"
         ],
         [
             "uzabe/system.py",
