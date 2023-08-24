@@ -7,7 +7,7 @@
         ],
         [
             "umodbus/common.py",
-            "github:ideilsonsouza/uzabe/lib/modbus/common.py"
+            "github:ideilsonsouza/uzabe/lib/umodbus/common.py"
         ],
         [
             "umodbus/const.py",
