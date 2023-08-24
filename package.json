@@ -62,7 +62,7 @@
             "github:ideilsonsouza/uzabe/lib/uzabe/network.py"
         ],
         [
-            "uzabe/request.py",
+            "uzabe/requests.py",
             "github:ideilsonsouza/uzabe/lib/uzabe/requests.py"
         ],
         [
