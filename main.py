@@ -62,7 +62,7 @@ class ZDCApplication:
             time.sleep(self.time_loop)
 
     def fetch_time_loop(self):
-        return int(self.sys_credentials.get_credentials('time_loop', default='20'))
+        return int(self.sys_credentials.load_register('time_loop', default='20'))
 
 
 if __name__ == "__main__":

@@ -409,6 +409,7 @@ def to_short(byte_array: bytes, signed: bool = True) -> bytes:
 
     :returns:   Integer representation
     :rtype:     bytes
+
     """
     response_quantity = int(len(byte_array) / 2)
     fmt = '>' + (('h' if signed else 'H') * response_quantity)

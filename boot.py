@@ -1,26 +1,40 @@
-from zdc_system import ZDCSystem
+from lib.uzabe.system import ZDCSystem
 import time
 import machine
 
 
 class ZDCBoot:
-    tentative = 0
+    MAX_TENTATIVES = 3
+    SLEEP_DURATION = 20  # em segundos
 
-    @staticmethod
-    def initialization():
-        system_device = ZDCSystem()
-        _initialization = system_device.start_system_device()
-        while not _initialization:
+    def __init__(self):
+        self.tentative = 0
+        self.system_device = ZDCSystem()
+
+    def initialization(self):
+        _initialization = self.system_device.start_system_device()
+
+        while not _initialization and self.tentative < self.MAX_TENTATIVES:
+            print("Sistema não inicializado")
+            self.tentative += 1
             try:
-                print(f"Sistema não inicializado")
-                ZDCBoot.tentative += 1
-                time.sleep(20)
-                _initialization = system_device.start_system_device()
+                time.sleep(self.SLEEP_DURATION)
+                _initialization = self.system_device.start_system_device()
             except Exception as e:
                 print(f"Erro: {e}")
-                if ZDCBoot.tentative >= 3:
-                    print(f"Sistema vai ser reiniciado em 20s")
-                    time.sleep(20)
-                    machine.reset()
+                if self.tentative >= self.MAX_TENTATIVES:
+                    self.restart_system()
 
-ZDCBoot.initialization()
+        if not _initialization:
+            print("Máximo de tentativas atingido. Reiniciando...")
+            self.restart_system()
+
+    def restart_system(self):
+        print(f"Sistema vai ser reiniciado em {self.SLEEP_DURATION}s")
+        time.sleep(self.SLEEP_DURATION)
+        machine.reset()
+
+
+if __name__ == "__main__":
+    boot_process = ZDCBoot()
+    boot_process.initialization()
