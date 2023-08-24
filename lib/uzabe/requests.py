@@ -55,13 +55,13 @@ class ZDCRequest:
             print(f"Error executing {method} request: {e}")
             return None
 
-    def execute_method(self, path, method=None):
+    def execute_method(self, path, method="GET", data=None, include_token=True):
         """Execute a specific HTTP method."""
         method = method or self.method
         if method not in ["GET", "POST", "PUT", "DELETE"]:
             raise ValueError(f"Unsupported method: {method}")
 
-        return self._execute_request(method, self._build_full_url(path))
+        return self._execute_request(method, self._build_full_url(path), data=data, include_token=include_token)
 
     def response_status_code(self):
         """Get the status code from the last response."""
