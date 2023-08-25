@@ -1,25 +1,27 @@
 <!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Configuração</title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
   </head>
   <body style="display: flex; justify-content: center; align-items: center">
     <div class="wifi-config-container">
       <h2>Configuração</h2>
-      <form action="/set_config" method="post">
+      <form action="/set-config" method="post">
+        <label for="description">Descrição do dispositivo:</label>
+        <input type="text" id="description" name="description" required />
 
-        <label for="base_url">Endereço do servidor:</label>
-        <input type="text" id="base_url" name="base_url" required />
+        <label for="url_server">Endereço do servidor:</label>
+        <input type="text" id="url_server" name="url_server" required />
 
         <label for="ssid">SSID:</label>
         <input type="text" id="ssid" name="ssid" required />
 
-        <label for="password">Senha:</label>
-        <input type="password" id="password" name="password" required />
+        <label for="ssid_pass">Senha:</label>
+        <input type="password" id="ssid_pass" name="ssid_pass" required />
 
         <input type="submit" value="Configurar" />
       </form>

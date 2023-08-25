@@ -1,8 +1,8 @@
 import machine
 import time
-from zdc_network import ZDCNetwork
-from zdc_device import ZDCDevice
-from zdc_credentials import ZDCCredentials
+from lib.uzabe.network import ZDCNetwork
+from lib.uzabe.configs import ZDCConfig
+from lib.uzabe.device import ZDCDevice
 
 MAX_RETRIES = 3
 MAX_TENTATIVE_LOGIN = 20
@@ -14,9 +14,9 @@ class ZDCApplication:
     def __init__(self):
         self.execute_counter = 0
         self.time_loop = 20
-        self.sys_credentials = ZDCCredentials()
-        self.sys_device = ZDCDevice()
-        self.sys_network = ZDCNetwork()
+        self.config = ZDCConfig()
+        self.device = ZDCDevice()
+        self.network = ZDCNetwork()
 
     def get_datasource(self):
         # TODO: Implementar este método
@@ -35,17 +35,19 @@ class ZDCApplication:
         pass
 
     def login(self):
-        user_connected = self.sys_device.login()
+        user_connected = self.device.login()
         while not user_connected and self.execute_counter < MAX_TENTATIVE_LOGIN:
             self.execute_counter += 1
             time.sleep(TIMEOUT)
-            user_connected = self.sys_device.login()
+            user_connected = self.device.login()
         return user_connected
 
     def run(self):
-        if not self.login():
-            if self.execute_counter >= MAX_TENTATIVE_LOGIN:
-                raise Exception("Max login attempts reached")
+        # device_token = self.config.load_register('token')
+        # if device_token:
+        #     if not self.login():
+        #         if self.execute_counter >= MAX_TENTATIVE_LOGIN:
+        #             raise Exception("Max login attempts reached")
 
         while True:
             self.time_loop = self.fetch_time_loop()
@@ -63,8 +65,7 @@ class ZDCApplication:
             time.sleep(self.time_loop)
 
     def fetch_time_loop(self):
-        return int(self.sys_credentials.load_register('time_loop', default='20'))
-
+        return int(self.config.load_register('time_loop', default='20', decode=False))
 
 if __name__ == "__main__":
     app = ZDCApplication()

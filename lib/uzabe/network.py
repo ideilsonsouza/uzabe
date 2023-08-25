@@ -93,10 +93,13 @@ class ZDCNetwork:
 
         ap_if = sys_network.WLAN(sys_network.AP_IF)
         ap_if.active(True)
-
         ap_if.config(essid=wifi_ap_name, password=wifi_ap_password)
 
-        return ap_if.active()
+        if ap_if.active():
+            ip_address = ap_if.ifconfig()[0]
+            print(f"AP Mode IP Address: {ip_address}")
+            return ip_address
+        return None
 
     @staticmethod
     def stop_client_ap():
@@ -111,7 +114,7 @@ class ZDCNetwork:
             if interface_type == 'WLAN':
                 self.interface = sys_network.WLAN(sys_network.STA_IF)
             elif interface_type == 'LAN':
-                self.interface = sys_network.LAN()
+                self.interface = None
             else:
                 raise ValueError("Unknown interface type")
 
@@ -123,9 +126,9 @@ class ZDCNetwork:
             ifconfig = self.interface.ifconfig()
             return ifconfig[0]
 
-    def get_lan_mac(self):
-        _NetworkInfo = self.NetworkInfo('LAN')
-        mac = _NetworkInfo.get_mac()
+    @staticmethod
+    def get_lan_mac():
+        mac = None
         return mac
 
     def get_wlan_mac(self):
@@ -133,13 +136,13 @@ class ZDCNetwork:
         mac = _NetworkInfo.get_mac()
         return mac
 
-    def get_lan_ip(self):
-        _NetworkInfo = self.NetworkInfo('LAN')
-        ifconfig = _NetworkInfo.get_ip()
-        return ifconfig[0]
+    @staticmethod
+    def get_lan_ip():
+        lan_ip = None
+        return lan_ip
 
     def get_wlan_ip(self):
         _NetworkInfo = self.NetworkInfo('WLAN')
         ifconfig = _NetworkInfo.get_ip()
-        return ifconfig[0]
+        return ifconfig
 

@@ -5,7 +5,7 @@ from lib.uzabe.configs import ZDCConfig
 class ZDCRequest:
     def __init__(self, method="GET"):
         self.config = ZDCConfig()
-        self.base_url = self.config.load_register('base_url', 'http://www.zabe.com.br/api').rstrip('/')
+        self.base_url = self.config.load_register('url_server', 'http://www.zabe.com.br/').rstrip('/')
         self.token = self.config.load_register('token', '')
         self.method = method
         self._last_response = None
@@ -59,6 +59,7 @@ class ZDCRequest:
         if method not in ["GET", "POST", "PUT", "DELETE"]:
             raise ValueError(f"Unsupported method: {method}")
 
+        print(self._build_full_url(path))
         return self._execute_request(method, self._build_full_url(path), data=data, include_token=include_token)
 
     def response_status_code(self):

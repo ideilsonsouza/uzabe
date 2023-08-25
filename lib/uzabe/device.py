@@ -14,14 +14,14 @@ class ZDCDevice:
         self.config = ZDCConfig()
         self.network = ZDCNetwork()
         self.command = ZDCCommand()
-        self.mac = self.network.get_wlan_mac() or self.network.get_lan_mac()
-        self.ip = self.network.get_wlan_ip()
+        self.mac = self.network.get_lan_mac() or self.network.get_wlan_mac()
+        self.ip = self.network.get_lan_ip() or self.network.get_wlan_ip()
         self.name = self.config.load_register('name')
         self.id = self.config.load_register('id') or self.mac
         self.rtc = RTC()
 
     @property
-    def apply_for_registration(self):
+    def apply_for_registration(self) -> bool:
         """VERIFICAÇÃO DO DISPOSITIVO NO SERVIDOR"""
         try:
             auto_register = ZDCRequest()
@@ -48,7 +48,8 @@ class ZDCDevice:
                     if email and password and device_id:
                         self.config.save_register('api_user', email, False)
                         self.config.save_register('api_pass', password, False)
-                        self.config.save_register('id', device_id)
+                        print(device_id)
+                        self.config.save_register('id', device_id, encode=False)
                         return True
 
             # VERIFICA SE O DISPOSITIVO JÁ FOI CONFIGURADO NO SERVIDOR

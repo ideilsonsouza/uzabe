@@ -3,122 +3,143 @@ from lib.uzabe.network import ZDCNetwork
 from lib.uzabe.configs import ZDCConfig
 from lib.uzabe.device import ZDCDevice
 
-credentials = ZDCConfig()
+import machine
 
-class ZDCWebServer:
-    def __init__(self):
-        self.srv = MicroWebSrv(webPath='www/')
-        self.config = ZDCConfig()
-        self.network = ZDCNetwork()
-        self.device = ZDCDevice()
+network = ZDCNetwork()
+config = ZDCConfig()
+device = ZDCDevice()
 
-    @MicroWebSrv.route('/')
-    def _index(self, http_client, http_response):
-        http_response.WriteResponseFile("/www/login.html", contentType="text/html")
+@MicroWebSrv.route('/')
+def _index(http_client, http_response):
+    http_response.WriteResponseFile("www/login.html", contentType="text/html")
 
-    @MicroWebSrv.route('/login')
-    def _login(self, http_client, http_response):
-        http_response.WriteResponseFile("/www/login.html", contentType="text/html")
+@MicroWebSrv.route('/login')
+def _login(http_client, http_response):
+    http_response.WriteResponseFile("www/login.html", contentType="text/html")
 
-    @MicroWebSrv.route('/dashboard')
-    def _dashboard(self, http_client, http_response):
-        http_response.WriteResponseFile("/www/dashboard.html", contentType="text/html")
+@MicroWebSrv.route('/dashboard')
+def _dashboard(http_client, http_response):
+    http_response.WriteResponseFile("www/dashboard.html", contentType="text/html")
 
-    @MicroWebSrv.route('/config')
-    def _config(self, http_client, http_response):
-        http_response.WriteResponseFile("/www/config.html", contentType="text/html")
 
-    @MicroWebSrv.route('/info')
-    def _info(self, http_client, http_response):
-        http_response.WriteResponseFile("/www/info.html", contentType="text/html")
+@MicroWebSrv.route('/config')
+def _config(http_client, http_response):
+    http_response.WriteResponseFile("www/config.html", contentType="text/html")
 
-    @MicroWebSrv.route('/device_info')
-    def _device_info(self, http_client, http_response):
-        mac_wlan = self.network.get_wlan_mac()
-        mac_lan = self.network.get_lan_mac()
-        ip_wlan = self.network.get_wlan_ip()
-        ip_lan = self.network.get_lan_ip()
-        last_change = self.config.load_register('last_change')
-        saved_ssid = self.config.load_register('ssid')
-        url_server = self.config.load_register('url_server')
 
-        data = {
-            'mac_wlan': mac_wlan,
-            'mac_lan': mac_lan,
-            'ip_wlan': ip_wlan,
-            'ip_lan': ip_lan,
-            'last_change': last_change,
-            'saved_ssid': saved_ssid,
-            'url_server': url_server
-        }
+@MicroWebSrv.route('/info')
+def _info(http_client, http_response):
+    http_response.WriteResponseFile("www/info.html", contentType="text/html")
 
-        http_response.WriteResponseJSONOk(data)
 
-    @MicroWebSrv.route('/login', 'POST')
-    def _post_login(self, http_client, http_response):
-        form_data: dict = http_client.ReadRequestPostedFormData()
-        username = form_data["username"]
-        password = form_data["password"]
+@MicroWebSrv.route('/device-info')
+def _device_info(http_client, http_response):
+    mac_wlan = network.get_wlan_mac()
+    mac_lan = network.get_lan_mac()
+    ip_wlan = network.get_wlan_ip()
+    ip_lan = network.get_lan_ip()
+    last_change = config.load_register('last_change')
+    saved_ssid = config.load_register('ssid')
+    url_server = config.load_register('url_server')
+    device_name = config.load_register('name')
 
-        if username == "admin" and password == "admin":
-            http_response.WriteResponseRedirect('/dashboard')
-        else:
-            http_response.WriteResponseRedirect('/login')
+    data = {
+        'mac_wlan': mac_wlan,
+        'mac_lan': mac_lan,
+        'ip_wlan': ip_wlan,
+        'ip_lan': ip_lan,
+        'last_change': last_change,
+        'saved_ssid': saved_ssid,
+        'url_server': url_server,
+        'device_name': device_name
+    }
 
-    @MicroWebSrv.route('/reset_settings', 'POST')
-    def _post_reset_settings(self, http_client, http_response):
+    http_response.WriteResponseJSONOk(data)
 
-        print("Solicitado a remoção do arquivo de credenciais")
 
-    @MicroWebSrv.route('/reboot_device', 'POST')
-    def _post_reboot_device(self, http_client, http_response):
-        machine.reset()
+@MicroWebSrv.route('/login', 'POST')
+def _post_login(http_client, http_response):
+    form_data: dict = http_client.ReadRequestPostedFormData()
+    username = form_data["username"]
+    password = form_data["password"]
 
-    @MicroWebSrv.route('/set_config', 'POST')
-    def _post_set_config(self, http_client, http_response):
-        form_data = http_client.ReadRequestPostedFormData()
+    if username == "admin" and password == "admin":
+        http_response.WriteResponseRedirect('/dashboard')
+    else:
+        http_response.WriteResponseRedirect('/login')
 
-        ssid = form_data.get("ssid", "").strip()
-        wifi_password = form_data.get("password", "").strip()
-        url_server = form_data.get("url_server", "").strip()
 
-        if ssid:
-            credentials.save_register('ssid', ssid)
-            if wifi_password:
-                credentials.save_register('ssid_pass', wifi_password)
-                if url_server:
-                    data_format = self.device.current_datetime()
-                    credentials.save_register('url_server', url_server)
-                    credentials.save_register('isConfigured', True)
-                    credentials.save_register('last_change', data_format)
+@MicroWebSrv.route('/reset-settings', 'POST')
+def _post_reset_settings(http_client, http_response):
+    url_server = config.load_register('url_server')
+    ssid_pass = config.load_register('ssid_pass')
+    ssid = config.load_register('ssid')
+    if url_server and ssid_pass and ssid:
+        config.save_register('isConfigured', True, False)
+        http_response.WriteResponseRedirect('/info')
 
-        http_response.WriteResponseRedirect('/success')
 
-        self.stop_server()
-        machine.reset()
+@MicroWebSrv.route('/reboot-device', 'POST')
+def _post_reboot_device(http_client, http_response):
+    machine.reset()
 
-    @MicroWebSrv.route('/success')
-    def _response_success(self, http_response):
-        content = ("\\n"
-                   "        <!DOCTYPE html>\n"
-                   "        <html lang=en>\n"
-                   "            <head>\n"
-                   "                <meta charset=\"UTF-8\" />\n"
-                   "                <title>Success</title>\n"
-                   "            </head>\n"
-                   "            <body>\n"
-                   "                <h1>Configuration Saved Successfully!</h1>\n"
-                   "                <h2>device is being restarted</h2>\n"
-                   "            </body>\n"
-                   "        </html>\n"
-                   "        ")
-        http_response.WriteResponseOk(headers=None,
-                                     contentType="text/html",
-                                     contentCharset="UTF-8",
-                                     content=content)
+@MicroWebSrv.route('/desable-settings', 'POST')
+def _post_desable_settings(http_client, http_response):
+    url_server = config.load_register('url_server')
+    ssid_pass = config.load_register('ssid_pass')
+    ssid = config.load_register('ssid')
+    if url_server and ssid_pass and ssid:
+        config.save_register('isConfigured', True, False)
+        http_response.WriteResponseRedirect('/info')
 
-    def start_server(self):
-        self.srv.Start()
 
-    def stop_server(self):
-        self.srv.Stop()
+@MicroWebSrv.route('/set-config', 'POST')
+def _post_set_config(http_client, http_response):
+    form_data = http_client.ReadRequestPostedFormData()
+
+    ssid = form_data.get("ssid", "").strip()
+    wifi_password = form_data.get("ssid_pass", "").strip()
+    url_server = form_data.get("url_server", "").strip()
+    device_desc = form_data.get("description", "").strip()
+
+    if ssid:
+        config.save_register('ssid', ssid)
+        if wifi_password:
+            config.save_register('ssid_pass', wifi_password)
+            if url_server:
+                data_format = device.current_datetime()
+                config.save_register('url_server', url_server)
+                config.save_register('last_change', data_format, False)
+                config.save_register('description', device_desc)
+                http_response.WriteResponseRedirect('/info', contentType="text/html")
+
+
+
+def _acceptWebSocketCallback(webSocket, httpClient):
+    print("WS ACCEPT")
+    webSocket.RecvTextCallback = _recvTextCallback
+    webSocket.RecvBinaryCallback = _recvBinaryCallback
+    webSocket.ClosedCallback = _closedCallback
+
+
+def _recvTextCallback(webSocket, msg):
+    print("WS RECV TEXT : %s" % msg)
+    webSocket.SendText("Reply for %s" % msg)
+
+
+def _recvBinaryCallback(webSocket, data):
+    print("WS RECV DATA : %s" % data)
+
+
+def _closedCallback(webSocket):
+    print("WS CLOSED")
+
+
+def start_server():
+    srv = MicroWebSrv(webPath='www/')
+    srv.MaxWebSocketRecvLen = 256
+    srv.WebSocketThreaded = True
+    srv.AcceptWebSocketCallback = _acceptWebSocketCallback
+    srv.Start()
+
+
