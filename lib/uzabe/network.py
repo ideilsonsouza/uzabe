@@ -3,15 +3,15 @@ import ubinascii as binascii
 import socket
 import os
 import time
-from uzconfigs import ZDCCredentials
-
+from lib.uzabe.configs import ZDCConfig
 
 class ZDCNetwork:
+    def __init__(self):
+        self.config = ZDCConfig()
 
     @staticmethod
     def ping_domain(url, port=80, timeout=5):
         domain = url.split("://")[-1].split("/")[0]
-
         try:
             addr_info = socket.getaddrinfo(domain, port)
             addr = addr_info[0][-1]
@@ -66,13 +66,12 @@ class ZDCNetwork:
             while not wlan.isconnected():
                 time.sleep(1)
 
-    @staticmethod
-    def connect_to_wifi():
+    def connect_to_wifi(self):
         timeout = 10
-        sys_credentials = ZDCCredentials()
-        wifi_name = sys_credentials.load_register('wifi_name')
-        wifi_password = sys_credentials.load_register('wifi_password')
-        ZDCNetwork.stop_client_ap()
+        sys_credentials = ZDCConfig()
+        wifi_name = self.config.load_register('ssid')
+        wifi_password = self.config.load_register('ssid_pass')
+        self.stop_client_ap()
         wlan = sys_network.WLAN(sys_network.STA_IF)
         wlan.active(True)
         if not wlan.isconnected():
@@ -86,11 +85,9 @@ class ZDCNetwork:
 
         return True
 
-    @staticmethod
-    def start_client_ap():
-        sys_credentials = ZDCCredentials()
-        wifi_ap_name = sys_credentials.load_register('wifi_ap_name')
-        wifi_ap_password = sys_credentials.load_register('wifi_ap_password')
+    def start_client_ap(self):
+        wifi_ap_name = self.config.load_register('ap_ssid')
+        wifi_ap_password = self.config.load_register('ap_pass')
         sta_if = sys_network.WLAN(sys_network.STA_IF)
         if sta_if.active():
             sta_if.active(False)

@@ -52,9 +52,11 @@ class ZDCApplication:
 
             if not self.check_command():
                 if self.get_datasource():
-                    self.send_datavalues()
-                else:
-                    print("Não foi encontrado fonte de dados a serem lidos")
+                   if self.send_datavalues():
+                       print("Não foi encontrado valores de dados a serem enviado")
+                    else:
+                        pass
+
             else:
                 print("Exite comandos a ser executados")
                 self.execute_command()

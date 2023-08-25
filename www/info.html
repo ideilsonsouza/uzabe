@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>Informações do Dispositivo</title>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body style="display: flex; justify-content: center; align-items: center">
+    <div class="device-info-container">
+      <h2>Informações do Dispositivo</h2>
+
+      <p>
+        <strong>MAC Address:</strong>
+        <span id="mac_address">00:1A:2B:3C:4D:5E</span>
+      </p>
+      <p>
+        <strong>Última Alteração:</strong>
+        <span id="last_change">10/10/2023 14:45</span>
+      </p>
+      <p><strong>SSID Salvo:</strong> <span id="saved_ssid">MeuWiFi</span></p>
+
+      <button id="reset_btn">Redefinir</button>
+      <button id="reboot_btn">Reiniciar</button>
+    </div>
+
+    <script>
+      window.onload = function () {
+        fetch("/device_info")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("mac_address").textContent =
+              data.mac_address;
+            document.getElementById("last_change").textContent =
+              data.last_change;
+            document.getElementById("saved_ssid").textContent = data.saved_ssid;
+          })
+          .catch((error) => {
+            console.error("Erro ao buscar informações do dispositivo:", error);
+          });
+      };
+
+      document
+        .getElementById("reset_btn")
+        .addEventListener("click", function () {
+          if (
+            confirm(
+              "Tem certeza de que deseja redefinir todas as configurações?"
+            )
+          ) {
+            fetch("/reset_settings", { method: "POST" })
+              .then((response) => response.text())
+              .then((text) => {
+                alert(text);
+              })
+              .catch((error) => {
+                alert("Erro ao redefinir configurações.");
+              });
+          }
+        });
+
+      document
+        .getElementById("reboot_btn")
+        .addEventListener("click", function () {
+          if (confirm("Tem certeza de que deseja reiniciar o dispositivo?")) {
+            fetch("/reboot_device", { method: "POST" })
+              .then((response) => response.text())
+              .then((text) => {
+                alert(text);
+
+                location.reload();
+              })
+              .catch((error) => {
+                alert("Erro ao reiniciar o dispositivo.");
+              });
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -59,6 +59,7 @@ class ZDCWebServer:
 
     @MicroWebSrv.route('/reset_settings', 'POST')
     def _httpHandlerSaveWifiReset_settings(httpClient, httpResponse):
+
         print("Solicitado a remoção do arquivo de credenciais")
 
 
@@ -76,15 +77,12 @@ class ZDCWebServer:
 
         if ssid:
             credentials.save_register('wifi_name', ssid)
-            credentials.save_register('device_configured', True)
+            if wifi_password:
+                credentials.save_register('wifi_password', wifi_password)
+                if base_url:
+                    credentials.save_register('base_url', base_url)
+                    credentials.save_register('device_configured', True)
 
-        if wifi_password:
-            credentials.save_register('wifi_password', wifi_password)
-            credentials.save_register('device_configured', True)
-
-        if base_url:
-            credentials.save_register('base_url', base_url)
-            credentials.save_register('device_configured', True)
 
         httpResponse.WriteResponseRedirect('/success-page')
 

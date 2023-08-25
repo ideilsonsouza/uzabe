@@ -2,61 +2,117 @@ import ntptime
 import machine
 import time
 import ujson as json
-from uzrequests import ZDCRequest
-from uznetwork import ZDCNetwork
-from uzconfigs import ZDCCredentials
-
-sys_network = ZDCNetwork()
-sys_credentials = ZDCCredentials()
-
+from lib.uzabe.configs import ZDCConfig
+from lib.uzabe.requests import ZDCRequest
+from lib.uzabe.const import ZDCConsts
+from lib.uzabe.network import ZDCNetwork
 
 class ZDCDevice:
     def __init__(self):
-        self.mac = sys_network.get_network_mac()
-        self.ip = sys_network.get_network_ip()
-        self.name = sys_credentials.load_register('device_name')
+        self.const = ZDCConsts()
+        self.config = ZDCConfig()
+        self.network = ZDCNetwork()
+        self.mac = self.network.get_network_mac()
+        self.ip = self.network.get_network_ip()
+        self.name = self.config.load_register('name')
+        self.id = self.config.load_register('id') or self.mac
 
+    @property
+    def apply_for_registration(self):
+        """VERIFICAÇÃO DO DISPOSITIVO NO SERVIDOR"""
+        try:
+            auto_register = ZDCRequest()
+            get_device = ZDCRequest()
+            data = {'mac': self.mac, 'nome': self.name, 'ip': self.ip}
+            auto_register.execute_method('/devices/auto-register', "POST", data, False)
 
-    def register_on_server(self):
-        sys_request = ZDCRequest()
-        data = {'mac':self.mac, 'nome':self.name, 'ip':self.ip }
-        HTTPResponse  =  sys_request.execute_post('/devices/check', data, include_token=False)
-        if  sys_request.response_status_code() == 200:
-            print(HTTPResponse.get('message'))
-            return True
-        else:
-            if sys_request.response_status_code() == 422:
-                descricao = f"Dispositivo mac:{self.mac} não foi registrado corretamento no sistema."
-                data = {'evento': 'Dispositivo ZDAC', 'descricao':descricao, 'origem':self.mac }
-                sys_request.execute_post('/events', data, include_token=False)
+            #VERIFICAR SE O DISPOSITIVO FOI REGISTRADO COM EXITO
+            #DEVE SER RETORNADO FALSE PARA QUE O LOOP CONTINUE
+            if auto_register.response_status_code() == self.const.HTTPResponse.CREATED:
+                print(f"Device registered to server with mac: {self.mac}")
+                return False
 
-            if sys_request.response_status_code() == 503:
-                print("Servidor em manutenção")
+            #VERIFICA SE O DISPOSITIVO ESTA CADASTRADO E SOLICITA OS DADOS PARA ACESSO
+            elif auto_register.response_status_code() == self.const.HTTPResponse.OK:
+                response = get_device.execute_method(f"/devices/check/{self.mac}", "GET", None, False)
+                if get_device.response_status_code() == self.const.HTTPResponse.OK:
+                    email = response.get('email')
+                    password = response.get('password')
+                    device_id = response.get('id')
 
-            if sys_request.response_status_code() == 500:
-                print("Servidor não esta acessivel no momento")
+                    #VERIFICA SE OS DADOS FOI RECEBIDO CORRETAMENTE E OS SALVA LOCALMENTE
+                    #SE TODOS OS VALORES FOI RECBIDO E SALVOS LOCALMENTE O RETORNO DEVE SER TRUE
+                    if email and password and device_id:
+                        self.config.save_register('api_user', email, False)
+                        self.config.save_register('api_pass', password, False)
+                        self.config.save_register('id', device_id)
+                        return True
 
-            if sys_request.response_status_code() == 404:
-                print("Endereço não esta mais acessivel")
-                descricao = f"Dispositivo mac:{self.mac} recebeu o erro 404 ao tentar se registrar"
-                data = {'evento': 'Dispositivo ZDAC', 'descricao':descricao, 'origem':self.mac }
-                sys_request.execute_post('/devices', data, include_token=False)
+            #VERIFICA SE O DISPOSITIVO JÁ FOI CONFIGURADO NO SERVIDOR
+            #O RETORNO DEVE SER FALSE PARA O LOOP CONTINUE ATE QUE SEJA LIBERADO NO SERVIDOR
+            elif auto_register.response_status_code() == self.const.HTTPResponse.UNAUTHORIZED:
+                print(f"Device is registered but not configured yet \
+                        mac: {self.mac}, is ready to be configured ")
+                return False
 
-            print(HTTPResponse.get('message'))
-            return False
+            #VERIFICA SE O DISPOSITIVO NÃO FOI REGISTRADO NO SERVIDOR
+            #NESTE EVENTO E CRIADO UM ALERTA INFORMANDO QUE O DISPOSITIVO NÃO PODE SER REGISTRADO
+            elif auto_register.response_status_code() == self.const.HTTPResponse.UNPROCESSABLE_ENTITY:
+                device_event = ZDCRequest()
+                description = f"Device mac:{self.mac} was not correctly registered with the server."
+                data = {'event': 'Device ZDAC', 'description':description, 'origin':self.mac }
+                device_event.execute_method('/events', "POST", data, False)
 
-    def get_device_infor(self):
-        sys_request = ZDCRequest()
-        device_id = sys_credentials.load_register('id')
+                #VERIFICADO SE O DISPOSITIVO JÁ TEM OS DADOS NECESSARIOS PARA FAZER O ENVIO
+                email = self.config.load_register('api_user', None, False)
+                password = self.config.load_register('api_pass', None, False)
+                device_id = self.config.load_register('api_pass', None, False)
+                token = self.config.load_register('token', None, False)
 
-    def set_sincro_timer(self):
+                # VERIFICADO SE O DISPOSITIVO JÁ TEM OS DADOS NECESSARIOS PARA FAZER O ENVIO
+                if email and password and device_id and token:
+                    return True
+                else:
+                    return False
+
+            #VERIFICA SE O RETORNO FOI DIFERENTE DE CRIAÇÃO E SOLICITAÇÃO DOS DADOS
+            #MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
+            elif not auto_register.response_status_code() in  [self.const.HTTPResponse.CREATED,
+                                                             self.const.HTTPResponse.OK,
+                                                             self.const.HTTPResponse.UNAUTHORIZED]:
+                email = self.config.load_register('api_user',None, False)
+                password = self.config.load_register('api_pass',None, False)
+                device_id = self.config.load_register('api_pass',None, False)
+                token = self.config.load_register('token',None, False)
+
+                # MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
+                if email and password and device_id and token:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except (OSError, ValueError):
+            # MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
+            email = self.config.load_register('api_user', None, False)
+            password = self.config.load_register('api_pass', None, False)
+            device_id = self.config.load_register('api_pass', None, False)
+            token = self.config.load_register('token', None, False)
+
+            # MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
+            if email and password and device_id and token:
+                return True
+            else:
+                return False
+
+    def sync_data(self):
         ntptime.settime()
         (year, month, day, weekday, hour, minute, second, millisecond) = rtc.datetime()
         hour = (hour - 3) % 24
         self.rtc.datetime((year, month, day, weekday, hour, minute, second, millisecond))
 
-    def current_datetime(self):
-        self.set_sincro_timer()
+    def current_date(self):
+        self.sync_data()
         current_datetime = self.rtc.datetime()
         "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(current_datetime[0], current_datetime[1],
                                                            current_datetime[2], current_datetime[4],
@@ -64,10 +120,10 @@ class ZDCDevice:
         return current_datetime
 
     def get_command(self):
-        sys_request = ZDCRequest()
-        HTTPResponse = sys_request.execute_get('/devices/command/' + self.mac)
-        if sys_request.response_status_code() == 200:
-            print(HTTPResponse.get('command'))
+        command_request = ZDCRequest()
+        response = command_request.execute_method(f"/devices/command/{self.id}", "GET", None, False)
+        if command_request.response_status_code() == 200:
+            return response.get('command')
             HTTPResponse = sys_request.execute_delete('/devices/command/' + self.mac)
             print(f" 'Função para executar os comandos '{HTTPResponse.get('command')}")
         else:

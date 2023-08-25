@@ -7,16 +7,34 @@ class ZDCConfig:
     def __init__(self):
         self.const_file = '/db/database.json'
 
-    def _load_file(self):
+    def _load_file(self)-> dict:
         try:
-            with open(self.const_file, 'r') as f:
-                return json.load(f)
+            with open(self.const_file, 'r') as database:
+                return json.load(database)
+        except (OSError, ValueError):
+            return {}
+
+    @staticmethod
+    def load_datasource() -> dict:
+        try:
+            with open('/db/datasource.json', 'r') as datasource:
+                return json.load(datasource)
         except (OSError, ValueError):
             return {}
 
     def _save_file(self, data):
-        with open(self.const_file, 'w') as f:
-            json.dump(data, f)
+        with open(self.const_file, 'w') as database:
+            json.dump(data, database)
+
+    @staticmethod
+    def save_datasource(data: dict) -> bool:
+        if data:
+            try:
+                with open('/db/datasource.json', 'w') as datasource:
+                    json.dump(data, datasource)
+                return True
+            except (OSError, ValueError):
+                return False
 
     def save_register(self, key, value, encode=True):
         credentials = self._load_file()
@@ -26,10 +44,13 @@ class ZDCConfig:
             credentials[key] = value
         self._save_file(credentials)
 
-    def verify_login(self, email, password):
+    def verify_login_web(self, email, password):
         saved_email = self.load_register("sys_user")
-        saved_password = self.load_register("sys_password")
-        return email == saved_email and password == saved_password
+        saved_password = self.load_register("sys_pass")
+        if email == saved_email and password == saved_password:
+            return True
+        else:
+            return False
 
     def load_register(self, key, default=None, decode=True):
         credentials = self._load_file()

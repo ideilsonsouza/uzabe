@@ -2,13 +2,11 @@ import urequests as urequest
 import ujson
 from lib.uzabe.configs import ZDCConfig
 
-
 class ZDCRequest:
-    _config = ZDCConfig()
-
     def __init__(self, method="GET"):
-        self.base_url = self._config.load_register('base_url', 'http://www.zabe.com.br/api').rstrip('/')
-        self.token = self._config.load_register('token', '')
+        self.config = ZDCConfig()
+        self.base_url = self.config.load_register('base_url', 'http://www.zabe.com.br/api').rstrip('/')
+        self.token = self.config.load_register('token', '')
         self.method = method
         self._last_response = None
 
