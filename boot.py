@@ -2,7 +2,6 @@ from lib.uzabe.system import ZDCSystem
 import time
 import machine
 
-
 class ZDCBoot:
     MAX_TENTATIVES = 10
     SLEEP_DURATION = 20  # em segundos

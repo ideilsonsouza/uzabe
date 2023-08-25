@@ -1,7 +1,6 @@
 import network as sys_network
 import ubinascii as binascii
 import socket
-import os
 import time
 from lib.uzabe.configs import ZDCConfig
 
@@ -97,6 +96,8 @@ class ZDCNetwork:
 
         ap_if.config(essid=wifi_ap_name, password=wifi_ap_password)
 
+        return ap_if.active()
+
     @staticmethod
     def stop_client_ap():
         ap_if = sys_network.WLAN(sys_network.AP_IF)
@@ -104,12 +105,41 @@ class ZDCNetwork:
         if ap_if.active():
             ap_if.active(False)
 
-    def get_network_mac(self):
-        mac = binascii.hexlify(sys_network.WLAN().config('mac'), ':').decode()
+    class NetworkInfo:
+
+        def __init__(self, interface_type):
+            if interface_type == 'WLAN':
+                self.interface = sys_network.WLAN(sys_network.STA_IF)
+            elif interface_type == 'LAN':
+                self.interface = sys_network.LAN()
+            else:
+                raise ValueError("Unknown interface type")
+
+        def get_mac(self):
+            mac = binascii.hexlify(self.interface.config('mac'), ':').decode()
+            return mac
+
+        def get_ip(self):
+            ifconfig = self.interface.ifconfig()
+            return ifconfig[0]
+
+    def get_lan_mac(self):
+        _NetworkInfo = self.NetworkInfo('LAN')
+        mac = _NetworkInfo.get_mac()
         return mac
 
-    def get_network_ip(self):
-        wlan = sys_network.WLAN(sys_network.STA_IF)
-        ifconfig = wlan.ifconfig()
+    def get_wlan_mac(self):
+        _NetworkInfo = self.NetworkInfo('WLAN')
+        mac = _NetworkInfo.get_mac()
+        return mac
+
+    def get_lan_ip(self):
+        _NetworkInfo = self.NetworkInfo('LAN')
+        ifconfig = _NetworkInfo.get_ip()
+        return ifconfig[0]
+
+    def get_wlan_ip(self):
+        _NetworkInfo = self.NetworkInfo('WLAN')
+        ifconfig = _NetworkInfo.get_ip()
         return ifconfig[0]
 

@@ -1,119 +1,124 @@
-import machine
-from MicroWebSrv.microWebSrv import MicroWebSrv
-from uzconfigs import ZDCCredentials
-from uznetwork import ZDCNetwork
+from lib.umicrowebserver.microWebSrv import MicroWebSrv
+from lib.uzabe.network import ZDCNetwork
+from lib.uzabe.configs import ZDCConfig
+from lib.uzabe.device import ZDCDevice
 
-credentials = ZDCCredentials()
-networks = ZDCNetwork()
-
-srv = MicroWebSrv(webPath='www/')
+credentials = ZDCConfig()
 
 class ZDCWebServer:
+    def __init__(self):
+        self.srv = MicroWebSrv(webPath='www/')
+        self.config = ZDCConfig()
+        self.network = ZDCNetwork()
+        self.device = ZDCDevice()
 
     @MicroWebSrv.route('/')
-    def _httpHandlerIndex(httpClient, httpResponse):
-        httpResponse.WriteResponseFile("/www/login.html", contentType="text/html")
+    def _index(self, http_client, http_response):
+        http_response.WriteResponseFile("/www/login.html", contentType="text/html")
 
     @MicroWebSrv.route('/login')
-    def _httpHandlerLogin(httpClient, httpResponse):
-        httpResponse.WriteResponseFile("/www/login.html", contentType="text/html")
+    def _login(self, http_client, http_response):
+        http_response.WriteResponseFile("/www/login.html", contentType="text/html")
 
     @MicroWebSrv.route('/dashboard')
-    def _httpHandlerDashboard(httpClient, httpResponse):
-        httpResponse.WriteResponseFile("/www/dashboard.html", contentType="text/html")
+    def _dashboard(self, http_client, http_response):
+        http_response.WriteResponseFile("/www/dashboard.html", contentType="text/html")
 
     @MicroWebSrv.route('/config')
-    def _httpHandlerConfig(httpClient, httpResponse):
-        httpResponse.WriteResponseFile("/www/config.html", contentType="text/html")
+    def _config(self, http_client, http_response):
+        http_response.WriteResponseFile("/www/config.html", contentType="text/html")
 
     @MicroWebSrv.route('/info')
-    def _httpHandlerInfo(httpClient, httpResponse):
-        httpResponse.WriteResponseFile("/www/info.html", contentType="text/html")
+    def _info(self, http_client, http_response):
+        http_response.WriteResponseFile("/www/info.html", contentType="text/html")
 
     @MicroWebSrv.route('/device_info')
-    def _httpHandlerDeviceInfo(httpClient, httpResponse):
-        mac_address = networks.get_network_mac()
-        last_change = ZDCCredentials.load_register('last_change')
-        saved_ssid = ZDCCredentials.load_register('wifi_name')
+    def _device_info(self, http_client, http_response):
+        mac_wlan = self.network.get_wlan_mac()
+        mac_lan = self.network.get_lan_mac()
+        ip_wlan = self.network.get_wlan_ip()
+        ip_lan = self.network.get_lan_ip()
+        last_change = self.config.load_register('last_change')
+        saved_ssid = self.config.load_register('ssid')
+        url_server = self.config.load_register('url_server')
 
         data = {
-            'mac_address': mac_address,
+            'mac_wlan': mac_wlan,
+            'mac_lan': mac_lan,
+            'ip_wlan': ip_wlan,
+            'ip_lan': ip_lan,
             'last_change': last_change,
-            'saved_ssid': saved_ssid
+            'saved_ssid': saved_ssid,
+            'url_server': url_server
         }
 
-        httpResponse.WriteResponseJSONOk(data)
-
+        http_response.WriteResponseJSONOk(data)
 
     @MicroWebSrv.route('/login', 'POST')
-    def _httpHandlerCheckLogin(httpClient, httpResponse):
-        formData = httpClient.ReadRequestPostedFormData()
-        username = formData["username"]
-        password = formData["password"]
+    def _post_login(self, http_client, http_response):
+        form_data: dict = http_client.ReadRequestPostedFormData()
+        username = form_data["username"]
+        password = form_data["password"]
 
         if username == "admin" and password == "admin":
-            httpResponse.WriteResponseRedirect('/dashboard')
+            http_response.WriteResponseRedirect('/dashboard')
         else:
-            httpResponse.WriteResponseRedirect('/login')
-
+            http_response.WriteResponseRedirect('/login')
 
     @MicroWebSrv.route('/reset_settings', 'POST')
-    def _httpHandlerSaveWifiReset_settings(httpClient, httpResponse):
+    def _post_reset_settings(self, http_client, http_response):
 
         print("Solicitado a remoção do arquivo de credenciais")
 
-
     @MicroWebSrv.route('/reboot_device', 'POST')
-    def _httpHandlerSaveWifiReboot_device(httpClient, httpResponse):
+    def _post_reboot_device(self, http_client, http_response):
         machine.reset()
 
     @MicroWebSrv.route('/set_config', 'POST')
-    def _httpHandlerSaveWifiConfig(httpClient, httpResponse):
-        formData = httpClient.ReadRequestPostedFormData()
+    def _post_set_config(self, http_client, http_response):
+        form_data = http_client.ReadRequestPostedFormData()
 
-        ssid = formData.get("ssid", "").strip()
-        wifi_password = formData.get("password", "").strip()
-        base_url = formData.get("base_url", "").strip()
+        ssid = form_data.get("ssid", "").strip()
+        wifi_password = form_data.get("password", "").strip()
+        url_server = form_data.get("url_server", "").strip()
 
         if ssid:
-            credentials.save_register('wifi_name', ssid)
+            credentials.save_register('ssid', ssid)
             if wifi_password:
-                credentials.save_register('wifi_password', wifi_password)
-                if base_url:
-                    credentials.save_register('base_url', base_url)
-                    credentials.save_register('device_configured', True)
+                credentials.save_register('ssid_pass', wifi_password)
+                if url_server:
+                    data_format = self.device.current_datetime()
+                    credentials.save_register('url_server', url_server)
+                    credentials.save_register('isConfigured', True)
+                    credentials.save_register('last_change', data_format)
 
+        http_response.WriteResponseRedirect('/success')
 
-        httpResponse.WriteResponseRedirect('/success-page')
-
-        ZDCWebServer.stop_server()
+        self.stop_server()
         machine.reset()
 
-
-    @MicroWebSrv.route('/success-page')
-    def _httpHandlerSuccessPage(httpClient, httpResponse):
-        content = """\
-        <!DOCTYPE html>
-        <html lang=en>
-            <head>
-                <meta charset="UTF-8" />
-                <title>Success</title>
-            </head>
-            <body>
-                <h1>Configuration Saved Successfully!</h1>
-            </body>
-        </html>
-        """
-        httpResponse.WriteResponseOk(headers=None,
+    @MicroWebSrv.route('/success')
+    def _response_success(self, http_response):
+        content = ("\\n"
+                   "        <!DOCTYPE html>\n"
+                   "        <html lang=en>\n"
+                   "            <head>\n"
+                   "                <meta charset=\"UTF-8\" />\n"
+                   "                <title>Success</title>\n"
+                   "            </head>\n"
+                   "            <body>\n"
+                   "                <h1>Configuration Saved Successfully!</h1>\n"
+                   "                <h2>device is being restarted</h2>\n"
+                   "            </body>\n"
+                   "        </html>\n"
+                   "        ")
+        http_response.WriteResponseOk(headers=None,
                                      contentType="text/html",
                                      contentCharset="UTF-8",
                                      content=content)
 
-    @staticmethod
-    def start_server():
-        srv.Start()
+    def start_server(self):
+        self.srv.Start()
 
-    @staticmethod
-    def stop_server():
-        srv.Stop()
-   
+    def stop_server(self):
+        self.srv.Stop()
