@@ -16,9 +16,9 @@ class ZDCSystem:
         self.config = ZDCConfig()
         self.device = ZDCDevice()
         self.network = ZDCNetwork()
-        self.sys_user = 'emRhY0B6YWJlLmNvbS5icg=='
-        self.sys_pass = 'WmRhY2VzcA=='
-        self.time_loop = 'MjA='        
+        self.sys_user = 'admin'
+        self.sys_pass = '@zabeadmin'
+        self.time_loop = 20
         lac_mac = self.network.get_lan_mac()
         wlan_mac = self.network.get_wlan_mac()
         mac = wlan_mac.replace(':', '').upper() or lac_mac.replace(':', '').upper()

@@ -65,7 +65,7 @@ class ZDCApplication:
             time.sleep(self.time_loop)
 
     def fetch_time_loop(self):
-        return int(self.config.load_register('time_loop', default='20'))
+        return int(self.config.load_register('time_loop', default=20))
 
 if __name__ == "__main__":
     app = ZDCApplication()

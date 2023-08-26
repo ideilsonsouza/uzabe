@@ -16,7 +16,7 @@ class ZDCDevice:
         self.ip = self.network.get_lan_ip() or self.network.get_wlan_ip()
         self.name = self.config.load_register('name')
         self.id = self.config.load_register('id') or self.mac
-        self.rtc = RTC()
+        self.rtc = RTC
 
     @property
     def apply_for_registration(self) -> bool:
@@ -44,8 +44,8 @@ class ZDCDevice:
                     # VERIFICA SE OS DADOS FOI RECEBIDO CORRETAMENTE E OS SALVA LOCALMENTE
                     # SE TODOS OS VALORES FOI RECBIDO E SALVOS LOCALMENTE O RETORNO DEVE SER TRUE
                     if email and password and device_id:
-                        self.config.save_register('api_user', email, False)
-                        self.config.save_register('api_pass', password, False)
+                        self.config.save_register('api_user', email)
+                        self.config.save_register('api_pass', password)
                         print(device_id)
                         self.config.save_register('id', device_id)
                         return True
@@ -66,10 +66,10 @@ class ZDCDevice:
                 device_event.execute_method('/events', "POST", data, False)
 
                 # VERIFICADO SE O DISPOSITIVO JÁ TEM OS DADOS NECESSARIOS PARA FAZER O ENVIO
-                email = self.config.load_register('api_user', None, False)
-                password = self.config.load_register('api_pass', None, False)
-                device_id = self.config.load_register('api_pass', None, False)
-                token = self.config.load_register('token', None, False)
+                email = self.config.load_register('api_user', None)
+                password = self.config.load_register('api_pass', None)
+                device_id = self.config.load_register('api_pass', None)
+                token = self.config.load_register('token', None)
 
                 # VERIFICADO SE O DISPOSITIVO JÁ TEM OS DADOS NECESSARIOS PARA FAZER O ENVIO
                 if email and password and device_id and token:
@@ -82,10 +82,10 @@ class ZDCDevice:
             elif not auto_register.response_status_code() in [self.const.HTTPResponse.CREATED,
                                                               self.const.HTTPResponse.OK,
                                                               self.const.HTTPResponse.UNAUTHORIZED]:
-                email = self.config.load_register('api_user', None, False)
-                password = self.config.load_register('api_pass', None, False)
-                device_id = self.config.load_register('api_pass', None, False)
-                token = self.config.load_register('token', None, False)
+                email = self.config.load_register('api_user', None)
+                password = self.config.load_register('api_pass', None)
+                device_id = self.config.load_register('api_pass', None)
+                token = self.config.load_register('token', None)
 
                 # MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
                 if email and password and device_id and token:
@@ -96,10 +96,10 @@ class ZDCDevice:
                 return False
         except (OSError, ValueError):
             # MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
-            email = self.config.load_register('api_user', None, False)
-            password = self.config.load_register('api_pass', None, False)
-            device_id = self.config.load_register('api_pass', None, False)
-            token = self.config.load_register('token', None, False)
+            email = self.config.load_register('api_user', None)
+            password = self.config.load_register('api_pass', None)
+            device_id = self.config.load_register('api_pass', None)
+            token = self.config.load_register('token', None)
 
             # MAS SE O DISPOSITIVO JÁ TIVER OS DADOS NECESSARIOS O LOOP E ENCERRADO
             if email and password and device_id and token:

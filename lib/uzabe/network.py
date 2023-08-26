@@ -85,8 +85,8 @@ class ZDCNetwork:
         return True
 
     def start_client_ap(self):
-        wifi_ap_name = self.config.load_register('ap_ssid')
-        wifi_ap_password = self.config.load_register('ap_pass')
+        wifi_ap_name: str = self.config.load_register('ap_ssid')
+        wifi_ap_password: str = self.config.load_register('ap_pass')
         sta_if = sys_network.WLAN(sys_network.STA_IF)
         if sta_if.active():
             sta_if.active(False)

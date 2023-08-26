@@ -111,7 +111,7 @@ def _post_set_config(http_client, http_response):
                 config.save_register('url_server', url_server)
                 config.save_register('last_change', data_format)
                 config.save_register('description', device_desc)
-                http_response.WriteResponseRedirect('/info', contentType="text/html")
+                http_response.WriteResponseRedirect('/info')
 
 
 
