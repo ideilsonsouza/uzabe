@@ -75,7 +75,7 @@ def _post_reset_settings(http_client, http_response):
     ssid_pass = config.load_register('ssid_pass')
     ssid = config.load_register('ssid')
     if url_server and ssid_pass and ssid:
-        config.save_register('isConfigured', True, False)
+        config.save_register('isConfigured', True)
         http_response.WriteResponseRedirect('/info')
 
 
@@ -89,7 +89,7 @@ def _post_desable_settings(http_client, http_response):
     ssid_pass = config.load_register('ssid_pass')
     ssid = config.load_register('ssid')
     if url_server and ssid_pass and ssid:
-        config.save_register('isConfigured', True, False)
+        config.save_register('isConfigured', True)
         http_response.WriteResponseRedirect('/info')
 
 
@@ -109,7 +109,7 @@ def _post_set_config(http_client, http_response):
             if url_server:
                 data_format = device.current_datetime()
                 config.save_register('url_server', url_server)
-                config.save_register('last_change', data_format, False)
+                config.save_register('last_change', data_format)
                 config.save_register('description', device_desc)
                 http_response.WriteResponseRedirect('/info', contentType="text/html")
 

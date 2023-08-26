@@ -1,5 +1,3 @@
-import ntptime
-import time
 from machine import RTC
 from lib.uzabe.configs import ZDCConfig
 from lib.uzabe.requests import ZDCRequest
@@ -49,7 +47,7 @@ class ZDCDevice:
                         self.config.save_register('api_user', email, False)
                         self.config.save_register('api_pass', password, False)
                         print(device_id)
-                        self.config.save_register('id', device_id, encode=False)
+                        self.config.save_register('id', device_id)
                         return True
 
             # VERIFICA SE O DISPOSITIVO JÁ FOI CONFIGURADO NO SERVIDOR
@@ -108,20 +106,6 @@ class ZDCDevice:
                 return True
             else:
                 return False
-
-    def sync_data(self):
-        try:
-            # Solicitar hora do servidor NTP
-            ntptime.settime()
-
-            # Ajustar para o fuso horário de Brasília (UTC-3)
-            (year, month, day, weekday, hour, minute, second, millisecond) = self.rtc.datetime()
-            hour = (hour - 3) % 24  # ajusta para UTC-3
-            self.rtc.datetime((year, month, day, weekday, hour, minute, second, millisecond))
-
-            print("Tempo sincronizado:", rtc.datetime())
-        except Exception as e:
-            print("Erro ao sincronizar o tempo:", e)
 
     def current_datetime(self):
         current_datetime = self.rtc.datetime()

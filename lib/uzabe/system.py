@@ -26,16 +26,16 @@ class ZDCSystem:
         self.wifi_ap_name = self.device_name
         self.wifi_ap_password = '@12345678'
         self.rtc = machine.RTC()
-        self.isConfigured = self.config.load_register('isConfigured', decode=False)
+        self.isConfigured = self.config.load_register('isConfigured')
 
     def _save_system_register(self):
         try:
-            self.config.save_register('sys_user', self.sys_user, encode=False)
-            self.config.save_register('sys_pass', self.sys_pass, encode=False)
-            self.config.save_register('time_loop', self.time_loop, encode=False)
-            self.config.save_register('name', self.device_name, encode=True)
-            self.config.save_register('ap_ssid', self.wifi_ap_name, encode=True)
-            self.config.save_register('ap_pass', self.wifi_ap_password, encode=True)
+            self.config.save_register('sys_user', self.sys_user)
+            self.config.save_register('sys_pass', self.sys_pass)
+            self.config.save_register('time_loop', self.time_loop)
+            self.config.save_register('name', self.device_name)
+            self.config.save_register('ap_ssid', self.wifi_ap_name)
+            self.config.save_register('ap_pass', self.wifi_ap_password)
             return True
 
         except ValueError as e:

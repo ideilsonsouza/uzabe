@@ -56,7 +56,7 @@ class ZDCConfig:
         credentials = self._load_file()
         value = credentials.get(key, default)
 
-        if not decode or value is None or not isinstance(value, str):
+        if not decode or value is None:
             return value
         try:
             return binascii.a2b_base64(value.encode()).decode()
